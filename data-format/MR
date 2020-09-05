@@ -1,0 +1,4 @@
+-D mapreduce.compress.map.output=true 
+-D mapreduce.map.ouput.compression.codec=
+
+-D mapreduce.compress.map.output=true 

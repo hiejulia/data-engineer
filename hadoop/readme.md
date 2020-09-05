@@ -36,3 +36,8 @@
 
 
 
+# Architecture system 
+- reboot 
+- byzantine 
+
+

@@ -1,0 +1,4 @@
+hdfs --config $HADOOP_EMPTY_CONFIG dfs -rm -r word_count
+yarn --config 
+locate hadoop/conf.HADOOP_EMPTY_CONFIG
+

@@ -1,0 +1,11 @@
+hdfs dfs -help 
+hdfs namenode
+
+hdfs dfs -ls -R -h /data/wiki
+hdfs dfs -du -h /data/wiki
+
+hdfs dfs -mv file.txt another.txt && hdfs dfs -rm another.txt
+
+hdfs dfs -put source hdfs-destination 
+
+
