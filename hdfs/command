@@ -37,3 +37,6 @@ hdfs dfs -find /data/wiki -name ''
 # Read / write data from / to Datanode in HDFS 
 
 
+
+# list 
+hdfs dfs -text /data/wiki/en_articles/* | head -c 80 

@@ -1,0 +1,24 @@
+yarn jar $HADOOP_STREAMING_JAR 
+    -file mapper.py 
+    -mapper python mapper.py 
+    -reducer...
+    -combiner...
+    -numreduce task 0 
+    - input /data/wiki/en_articles 
+    -output wordcount 
+
+
+
+
+# Run speculative exe 
+yarn jar $MR_STREAMING_JAR 
+    -D mapreduce.map.speculative = true 
+    -D mapreduce.map.speculative = true 
+    -D mapreduce.map.speculative = true 
+    -D mapreduce.map.speculative = true 
+    -file flaky_mapper.py
+    -mapper python flaky_mapper.py 
+    -output flaky_mr 
+    -numReduceTasks 0 
+    -input /data/wiki/en_articles_part 
+    
