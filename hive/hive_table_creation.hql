@@ -83,3 +83,15 @@ CREATE EXTERNAL TABLE business (
 STORED AS parquet
 LOCATION '/user/cloudera/hackerday/yelp/transformed/business';
 
+
+
+create external table apace_log (
+	ip string, 
+	auth_user string 
+)
+row format serde 'org.apache.hadoop.hive.serde2.regexserde'
+
+with 
+
+location '/user/hien/local_log'
+
