@@ -17,6 +17,7 @@ Video
 
 
 Online course 
+- Taming Big Data with Apache Spark and Python 
 
 
 
@@ -27,3 +28,11 @@ Book
 Research paper 
 
 
+
+
+
+Run 
+
+- Set up AWS Data 
+- Set up Data pipeline 
+- 

@@ -14,6 +14,8 @@
 - broadcast join 
 
 
-
+## Links 
+- localhost:50070 
+- localhost:50070/explorer.html/user/hive/
 
 

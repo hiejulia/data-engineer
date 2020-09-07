@@ -95,3 +95,8 @@ with
 
 location '/user/hien/local_log'
 
+
+
+load data local inpath 'home/..' overwrite into table....
+
+
