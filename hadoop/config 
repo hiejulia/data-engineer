@@ -1,0 +1,13 @@
+yarn --config $HADOOP_EMPTY_CONFIG jar $HADOOP_STREAMING_JAR 
+    -D mapreduce.job.output.key.comparator.class = 
+    -D mapreduce.job.output.key.comparator.class
+    -D mapreduce.job.output.key.comparator.class
+
+    -files identity_mr.py 
+    - mapper python identity_mr.py
+    - reducer python identity_mr.py 
+    - numreduce task 1 
+    - input subnet.txt 
+    - output subnet_out 
+
+

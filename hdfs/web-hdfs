@@ -1,0 +1,21 @@
+HTTP GET 
+- open 
+- getfilestatus
+- liststatus
+
+HTTP PUT
+- create 
+- mkdirs 
+- rename
+- setreplication 
+
+
+HTTP POST
+- append 
+
+
+HTTP DELETE 
+- delete 
+
+
+HTTP PUT 

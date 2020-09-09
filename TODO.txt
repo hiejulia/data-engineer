@@ -1,0 +1,38 @@
+Github
+
+https://github.com/maxis42/Big-Data-Engineering-Coursera-Yandex : done 
+
+
+Video 
+- Netflix data engineer 
+- Yelp data engineer 
+- Facebook data engineer 
+- AirBnB data engineer 
+- Yandex data engineer 
+- Alibaba data engineer 
+- twitter, microsoft, ibm 
+
+- Data engineer course 
+- 
+
+
+Online course 
+- Taming Big Data with Apache Spark and Python 
+
+
+
+Book 
+
+
+
+Research paper 
+
+
+
+
+
+Run 
+
+- Set up AWS Data 
+- Set up Data pipeline 
+- 
