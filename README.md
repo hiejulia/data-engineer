@@ -22,3 +22,13 @@
 - localhost:50070/explorer.html/user/hive/
 
 
+## How to run 
+- Run python script
+- Run Spark program 
+    - spark-submit .py 
+- Run MR job 
+
+
+
+# Big data link 
+https://github.com/big-data-europe
