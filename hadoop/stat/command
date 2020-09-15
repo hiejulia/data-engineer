@@ -1,0 +1,1 @@
+!hdfs --config ~/hadoop_palmetto/config fsck intro-to-hadoop/text/complete-shakespeare.txt -files -blocks -locations
