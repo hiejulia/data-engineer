@@ -1,0 +1,6 @@
+pig
+
+
+Run 
+pig -x local ...
+pig -x local

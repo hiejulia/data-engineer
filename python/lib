@@ -4,3 +4,4 @@ Apache Avro website http://avro.apache.org/
 RCFile paper http://web.cse.ohio-state.edu/hpcs/WWW/HTML/publications/papers/TR-11-4.pdf
 Apache Parquet website https://parquet.apache.org/
 
+pip install snakebite
