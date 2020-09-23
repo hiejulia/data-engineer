@@ -9,3 +9,5 @@
     - download sandbox 
     - build docker 
     - go to : sandbox-hdp.hortonworks.com:1080/
+
+    
