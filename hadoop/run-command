@@ -1,0 +1,18 @@
+# Snippet 
+
+hadoop fs -mkdir nfldata/stadiums
+hadoop fs -put ~/workspace/nfldata/unixstadiums.csv  nfldata/stadiums/
+
+hadoop jar /usr/lib/hadoop-0.20-mapreduce/contrib/streaming/hadoop-streaming-2.0.0-mr1-cdh4.4.0.jar \
+    -Dmapred.reduce.tasks=1 \
+    -input nfldata/stadiums \
+    -output nfldata/output1 \
+    -mapper cat \
+    -reducer "wc -l"
+
+# now we check our results:
+hadoop fs -ls nfldata/output1
+
+# looks like files are there, lets get the result:
+hadoop fs -text nfldata/output1/part*
+# => 32

@@ -1,0 +1,7 @@
+cd streaming-python
+cat ~/workspace/nfldata/unixstadiums.csv | simple/mapper.py | sort | simple/reducer.py
+# FALSE 15
+# TRUE 17
+
+
+cat document | ./mapper.py | sort -k1,1 | ./reducer.py > output
