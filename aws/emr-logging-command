@@ -1,0 +1,18 @@
+- Master node - EMR related logs 
+    /var/log
+
+- bootstrap action log 
+    - /var/log/bootstrap-actions/ all nodes 
+
+- app provisioning log 
+    - /var/log/provision-node/ all node 
+- EMR step log 
+    - /var/log/hadoop/steps/N 
+
+- instance state 
+    - snapshot metrics 15 min 
+    - /emr/instance-state 
+
+
+- log s3 
+    - :s3://

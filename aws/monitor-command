@@ -1,0 +1,4 @@
+aws emr list-clusters --cluster-states WAITING | jq
+
+aws emr describe-cluster --cluster-id | jq
+
