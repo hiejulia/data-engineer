@@ -11,7 +11,7 @@
 - jackson-mapper-asl
 - elephant-bird-hadoop 
 
-
+## 
 
 ## Join 
 - broadcast join 
@@ -27,6 +27,20 @@
 - Run Spark program 
     - spark-submit .py 
 - Run MR job 
+
+
+
+## Batch processing 
+
+
+
+
+## Real time processing 
+
+
+
+## ML model API 
+
 
 
 

@@ -3,6 +3,9 @@
 
 
 
+
+
+
 - HDP 
     - docker 
         -mem : 10 gb
@@ -11,3 +14,12 @@
     - go to : sandbox-hdp.hortonworks.com:1080/
 
     
+- Openshift 
+    - test pipeline env
+    - prod pipeline env 
+    - labeling pipeline 
+
+    - Run locally 
+        - docker build 
+        - api endpoint 
+        
