@@ -43,6 +43,3 @@
 
 
 
-
-# Big data link 
-https://github.com/big-data-europe
