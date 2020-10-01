@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow
+  labels:
+    app: airflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+  template:
+    metadata:
+      labels:
+        app: airflow
+    spec:
+      serviceAccountName: airflow
+      initContainers:
+        - name: initdb
+          image: airflow
+          imagePullPolicy: Always
+          command:
+            - airflow
+          args:
+            - initdb
+          envFrom:
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: airflow-home
+              mountPath: /var/lib/airflow
+          resources:
+            requests:
+              cpu: 0.5
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 1Gi
+      containers:
+        - name: scheduler
+          image: airflow
+          imagePullPolicy: Always
+          command:
+            - airflow
+          args:
+            - scheduler
+          envFrom:
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: dags
+              mountPath: /var/lib/airflow-dags
+              readOnly: true
+            - name: airflow-home
+              mountPath: /var/lib/airflow
+          resources:
+            requests:
+              cpu: 0.75
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 1Gi
+        - name: webserver
+          image: airflow
+          imagePullPolicy: Always
+          command:
+            - airflow
+          args:
+            - webserver
+          envFrom:
+            - configMapRef:
+                name: airflow-config
+          volumeMounts:
+            - name: dags
+              mountPath: /var/lib/airflow-dags
+              readOnly: true
+            - name: airflow-home
+              mountPath: /var/lib/airflow
+          resources:
+            requests:
+              cpu: 0.25
+              memory: 1Gi
+            limits:
+              cpu: 2
+              memory: 2Gi
+        - name: git-sync
+          image: k8s.gcr.io/git-sync:v3.1.2
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: git-sync-config
+          volumeMounts:
+            - name: dags
+              mountPath: /git
+      volumes:
+        - name: dags
+          emptyDir: {}
+        - name: airflow-home
+          emptyDir: {}

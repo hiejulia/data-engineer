@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - airflow-config.yaml
+  - git-sync-config.yaml
+  - deployment.yaml
+namespace: airflow-basic
+images:
+  - name: airflow
+    newName: kube-airflow/public/airflow
+    newTag: "1.10.10"
+commonLabels:
+  user: changeme

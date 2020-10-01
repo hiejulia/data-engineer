@@ -1,0 +1,9 @@
+bases:
+  # Replace "../k8s" with "git@github.com:kube-airflow.git/k8s"
+  # to pull directly from Git.
+  - ../k8s
+patchesStrategicMerge:
+  - overlay.yaml
+namePrefix: example-
+commonLabels:
+  user: example

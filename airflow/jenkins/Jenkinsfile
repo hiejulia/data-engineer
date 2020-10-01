@@ -1,0 +1,62 @@
+AHTAAJA_DOCKER_REPO = 'kube-airflow/public'
+AIRFLOW_IMAGE_NAME = "${DOCKER_REPO}/airflow"
+AIRFLOW_VERSION = '1.10.10'
+
+pipeline {
+    agent any
+    options {
+        timestamps()
+        skipStagesAfterUnstable()
+    }
+    triggers {
+        githubPush()
+    }
+    stages {
+        stage ('ensure Docker image can be built') {
+            steps {
+                script {
+                    dockerBuild = docker.build(
+                        "${AIRFLOW_IMAGE_NAME}:${GIT_COMMIT}",
+                        ". --build-arg AIRFLOW_VERSION=${AIRFLOW_VERSION}"
+                    )
+                }
+            }
+        }
+        stage ('validate k8s manifests') {
+            agent {
+                docker {
+                    image 'kubernetes-core/public/k8s-actions'
+                }
+            }
+            steps {
+                script {
+                    sh "rm -f kubernetes.base.yaml kubernetes.example.yaml"
+                    sh "kubectl kustomize k8s > kubernetes.base.yaml"
+                    sh "MANIFEST_PATH=kubernetes.base.yaml k8s.sh validate"
+                    sh "kubectl kustomize example > kubernetes.example.yaml"
+                    sh "MANIFEST_PATH=kubernetes.example.yaml k8s.sh validate"
+                }
+            }
+        }
+        stage ('publish Docker image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://', '') {
+                        dockerBuild.push(AIRFLOW_VERSION)
+                        dockerBuild.push("${AIRFLOW_VERSION}-${BUILD_NUMBER}")
+                        dockerBuild.push('latest')
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+

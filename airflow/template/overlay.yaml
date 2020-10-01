@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-config
+data:
+  AIRFLOW__CORE__DAGS_FOLDER: "/var/lib/airflow-dags/sync/example"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-sync-config
+stringData:
+  GIT_SYNC_REPO: "https://github.com/kube-airflow.git"
+  GIT_SYNC_USERNAME: "CHANGE ME"
+  GIT_SYNC_PASSWORD: "CHANGE ME"

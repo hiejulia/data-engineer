@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-sync-config
+stringData:
+  GIT_SYNC_ROOT: /git
+  GIT_SYNC_DEST: sync
+  GIT_SYNC_ONETIME: "false"
+  GIT_SYNC_DEPTH: "1"
+  GIT_SYNC_WAIT: "120"
+  GIT_KNOWN_HOSTS: "false"
+  GIT_SYNC_BRANCH: master
+  GIT_SYNC_REPO: ""
+  GIT_SYNC_USERNAME: ""
+  GIT_SYNC_PASSWORD: ""
