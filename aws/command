@@ -1,1 +1,5 @@
 - EMR
+
+
+ssh -i pem file hadoop@....
+
