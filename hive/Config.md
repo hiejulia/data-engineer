@@ -27,6 +27,60 @@
 </property>
 
 
+- Transaction 
+
+
+<configuration>
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://localhost:3306/hivedb</value>
+        <description>metadata is stored in a MySQL server</description>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>com.mysql.jdbc.Driver</value>
+        <description>MySQL JDBC driver class</description>
+    </property>
+    <property>
+          <name>javax.jdo.option.ConnectionUserName</name>
+          <value>root</value>
+          <description>user name for connecting to mysql server</description>
+    </property>
+    <property>
+          <name>javax.jdo.option.ConnectionPassword</name>
+          <value>root</value>
+          <description>password for connecting to mysql server</description>
+     </property>
+ <property>
+          <name>hive.support.concurrency</name>
+          <value>true</value>
+     </property>
+ <property>
+          <name>hive.enforce.bucketing</name>
+          <value>true</value>
+     </property>
+ <property>
+          <name>hive.exec.dynamic.partition.mode</name>
+          <value>nonstrict</value>
+     </property>
+ <property>
+          <name>hive.txn.manager</name>
+          <value>org.apache.hadoop.hive.ql.lockmgr.DbTxnManager</value>
+     </property>
+ <property>
+          <name>hive.compactor.initiator.on</name>
+          <value>true</value>
+     </property>
+ <property>
+          <name>hive.compactor.worker.threads</name>
+          <value>1</value>
+     </property>
+</configuration>
+
+
+$HIVE_HOME/bin/schematool -dbType mysql -initSchema
+
+
 
 
 - Link 

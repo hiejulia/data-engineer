@@ -42,15 +42,40 @@ Connect remove HiveServer
 beeline -u 'jdbc:hive2://localhost:10000/default' -n root -p xxx -d org.apache.hive.jdbc.HiveDriver -e "select * from sales;"
 
 
+- data type
+
+CREATE TABLE test(column1 UNIONTYPE<int, double, array<string>, struct<age:int,country:string>>);
+
+
 
 
 - Create 
+
+CREATE [TEMPORARY] [EXTERNAL] TABLE [IF NOT EXISTS]
+    [db_name.] table_name
+    [(col_name data_type [COMMENT col_comment], ...)]
+    [COMMENT table_comment]
+    [PARTITIONED BY (col_name data_type [COMMENT col_comment], ...)]
+    [CLUSTERED BY (col_name, col_name, ...) [SORTED BY (col_name [ASC|DESC], ...)] INTO num_buckets BUCKETS]
+    [SKEWED BY (col_name, col_name, ...)
+    ON ((col_value, col_value, ...), (col_value, col_value, ...), ...)
+    [STORED AS DIRECTORIES]
+    [
+    [ROW FORMAT row_format]
+    [STORED AS file_format]
+    | STORED BY 'storage.handler.class.name' [WITH SERDEPROPERTIES (...)]
+    ]
+    [LOCATION hdfs_path]
+    [TBLPROPERTIES (property_name=property_value, ...)]
+    [AS select_statement];
+
+
 
 
 CREATE [EXTERNAL] TABLE [IF NOT EXISTS] [database_name.]table_name
   [(column_name data_type [COMMENT column_comment], ...)]
   [PARTITIONED BY (column_name data_type [COMMENT column_comment], ...)];
-  
+
 
 > CREATE TABLE employee (
       >   name STRING,
@@ -94,6 +119,56 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] [database_name.]table_name
 > TBLPROPERTIES(
 > 'mongo.uri'='mongodb://localhost:27017/default.mongo_sample'
 > );
+
+
+- SerDe
+
+
+hive>CREATE TABLE web_logs(remote_ip STRING,dt STRING,httpmethod STRING,request STRING,protocol STRING)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.RegexSerDe'
+WITH SERDEPROPERTIES("input.regex" = "([^ ]*) ([^ ]*) ([^ ]*) (?:-|\[([^\]]*)\]) ([^ \"]*|\"[^\"]*\") (-|[0-9]*)",
+"output.format.string" = "%1$s %2$s %3$s %4$s %5$s"
+);
+
+
+JsonSerDe
+
+
+
+CREATE EXTERNAL TABLE messages (
+msg_id BIGINT,
+tstamp STRING,
+text STRING,
+user_id BIGINT,
+user_name STRING
+)
+ROW FORMAT SERDE "org.apache.hadoop.hive.contrib.serde2.JsonSerde"
+WITH SERDEPROPERTIES (
+"msg_id"="$.id",
+"tstamp"="$.created_at",
+"text"="$.text",
+"user_id"="$.user.id",
+"user_name"="$.user.name"
+)
+LOCATION '/data/messages';
+
+
+- CSVSERDE
+
+CREATE TABLE my_table(a string, b string, ...)
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+    "separatorChar" = "\t",
+    "quoteChar"     = "'",
+    "escapeChar"    = "\\"
+)
+STORED AS TEXTFILE;
+
+
+
+
+
+
 
 
 !table employee
@@ -182,6 +257,10 @@ CREATE [EXTERNAL] TABLE [IF NOT EXISTS] [database_name.]table_name
 
 - Index 
 
+CREATE INDEX index_ip ON TABLE sales(ip) AS 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler' WITH DEFERRED REBUILD;
+
+- 
+
 
 - Compress
 > SET hive.exec.compress.intermediate=true
@@ -233,6 +312,52 @@ SET hive.execution.engine=<engine>; -- <engine> = mr|tez|spark
 
 
 - Data manipulation
+
+LOAD DATA [LOCAL] INPATH 'filepath' [OVERWRITE] INTO TABLE tablename [PARTITION (partcol1=val1, partcol2=val2 ...)]
+
+
+INSERT OVERWRITE TABLE tablename [PARTITION (partcol1=val1, partcol2=val2 ...) [IF NOT EXISTS]] select select_statement FROM from_statement;
+
+
+INSERT INTO TABLE tablename [PARTITION (partcol1=val1, partcol2=val2 ...)] select select_statement FROM from_statement;
+
+FROM from_statement
+INSERT OVERWRITE TABLE tablename1 [PARTITION (partcol1=val1, partcol2=val2 ...) [IF NOT EXISTS]] select select_statement1
+[INSERT OVERWRITE TABLE tablename2 [PARTITION ... [IF NOT EXISTS]] select select_statement2]
+[INSERT INTO TABLE tablename2 [PARTITION ...] select select_statement2] ...;
+
+- Insert to dynamic partition 
+
+FROM tablename
+INSERT OVERWRITE TABLE tablename1 PARTITION(root_partition_name='value',child_partition_name)
+SELECT select_statment;
+
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+
+FROM sales_region slr
+INSERT OVERWRITE TABLE sales PARTITION(dop='2015-10-20', city) SELECT slr.id, slr.firstname, slr.lastname, slr.city;
+
+
+- Write data to query 
+
+Standard syntax:
+INSERT OVERWRITE [LOCAL] DIRECTORY directory1 [ROW FORMAT row_format] [STORED AS file_format]SELECT select_statment FROM from_statment.
+
+Hive extension (multiple inserts):
+FROM from_statement
+INSERT OVERWRITE [LOCAL] DIRECTORY directory1 select_statement1
+[INSERT OVERWRITE [LOCAL] DIRECTORY directory2 select_statement2] ...
+
+
+INSERT OVERWRITE LOCAL DIRECTORY '/sales'
+SELECT sle.id, sle.fname, sle.lname, sle.address
+FROM sales sle;
+
+
+
 
 > LOAD DATA LOCAL INPATH
       > '/home/dayongd/Downloads/employee_hr.txt'
@@ -379,6 +504,8 @@ No rows affected (174.357 seconds)
 
 
 > SHOW TRANSACTIONS;
+
+
 
 
 
@@ -534,6 +661,87 @@ b.gender_age.gender = 'Male'
 > SELECT a.name FROM employee a
 > LEFT SEMI JOIN employee_id b ON a.name = b.name;
 
+- Optimize join 
+join_table:
+    table_reference JOIN table_factor [join_condition]
+  | table_reference {LEFT|RIGHT|FULL} [OUTER] JOIN table_reference    join_condition
+  | table_reference LEFT SEMI JOIN table_reference join_condition
+  | table_reference CROSS JOIN table_reference [join_condition] 
+
+table_reference:
+    table_factor
+  | join_table
+
+  table_factor:
+    tbl_name [alias]
+  | table_subquery alias
+  | ( table_references )
+
+join_condition:
+    ON equality_expression
+
+
+
+- Skew join 
+
+set 
+hive.optimize.skewjoin=true;
+set hive.skewjoin.key=100000;
+
+- bucket sort merge map join 
+Set hive.enforce.sorting = true;
+
+set hive.input.format = org.apache.hadoop.hive.ql.io.BucketizedHiveInputFormat;
+set hive.optimize.bucketmapjoin = true;
+set hive.optimize.bucketmapjoin.sortedmerge = true;
+
+SELECT /*+ MAPJOIN(table2) */ column1, column2, column3…
+FROM table1 [alias_name1] JOIN table2 [alias_name2] 
+ON table1 [alias_name1].key = table2 [alias_name2].key
+
+
+SELECT /*+ MAPJOIN(Sales_orc) */ a.*, b.* FROM Sales a JOIN Sales_orc b ON a.id = b.id;
+
+SELECT /*+ MAPJOIN(Sales_orc, Location) */ a.*, b.*, c.* FROM Sales a JOIN Sales_orc b ON a.id = b.id JOIN Location ON a.id = c.id;
+
+
+- bucket map join 
+
+set hive.optimize.bucketmapjoin = true
+set hive.enforce.bucketing = true
+
+
+
+SELECT /*+ MAPJOIN(table2) */ column1, column2, column3
+FROM table1 [alias_name1] JOIN table2 [alias_name2]
+ON table1 [alias_name1].key = table2 [alias_name2].key
+
+- Map side join
+
+set hive.auto.convert.join=true;
+
+SELECT /*+ MAPJOIN(Sales_orc)*/ a.fname, b.lname FROM Sales a JOIN Sales_orc b ON a.id = b.id;
+SELECT a.* FROM Sales a JOIN Sales_orc b ON a.id = b.id and a.fname = b.fname;
+
+
+- Cross join 
+
+SELECT * FROM Sales a CROSS JOIN Sales_orc b JOIN Location c on a.id = c.id;
+
+- left semi join 
+
+join_condition
+  | table_reference LEFT SEMI JOIN table_reference join_condition
+
+  SELECT a.* FROM Sales a LEFT SEMI JOIN Sales_orc b ON a.id = b.id WHERE b.id = 1;
+
+
+
+
+
+
+
+
 
 - Union 
 > SELECT a.name as nm FROM employee a
@@ -592,8 +800,29 @@ b.gender_age.gender = 'Male'
 > SELECT name, workplace FROM employee_internal
 > LATERAL VIEW OUTER explode(split(null, ',')) wp as workplace;
 
+EXPLAIN SELECT * FROM sales_view WHERE pid = 'PI_02' OR pid = 'PI_03' ;
+
+
+
+
+
+
+
+
+
 - Bucket 
+
+Bucket number = hash_function(bucketing_column) mod num_buckets
+
+
 > set hive.enforce.bucketing = true; -- This is recommended
+
+CREATE [EXTERNAL] TABLE [db_name.]table_name
+    [(col_name data_type [COMMENT col_comment], ...)]
+    CLUSTERED BY (col_name data_type [COMMENT col_comment], ...)
+INTO N BUCKETS;
+
+CREATE TABLE sales_bucketed (id INT, fname STRING, lname STRING, address STRING,city STRING,state STRING, zip STRING, IP STRING, prod_id STRING, date1 STRING) CLUSTERED BY (id) INTO 10 BUCKETS;
 
 
 --Prepare table employee_id and its dataset to populate bucket table
@@ -637,6 +866,38 @@ $hdfs dfs -ls /user/hive/warehouse/employee_id_buckets
 
 
 - Partition
+
+hive> set hive.mapred.mode=strict;
+
+hive> set hive.mapred.mode=nonstrict;
+
+SET hive.exec.dynamic.partition = true;
+SET hive.exec.dynamic.partition.mode = nonstrict;
+
+
+hive> SHOW PARTITIONS customer
+
+hive> SHOW PARTITIONS customer PARTITION(country = 'US')
+
+ALTER TABLE table_name ADD [IF NOT EXISTS] PARTITION partition_spec
+    [LOCATION 'loc1'] partition_spec [LOCATION 'loc2'] ...;
+
+
+LOAD DATA [LOCAL] INPATH 'filepath' [OVERWRITE] INTO TABLE tablename [PARTITION (partcolumn1=value1, partcolumn2=value2 ...)]
+
+INSERT OVERWRITE TABLE tablename1 [PARTITION (partcolumn1=value1, partcolumn2=value2 ...)] select_statement1 FROM from_statement;
+
+INSERT INTO TABLE tablename1 [PARTITION (partcolumn1=value1, partcolumn2=value2 ...)] select_statement1 FROM from_statement;
+
+
+
+
+- Partition external table
+
+
+
+
+
 
  CREATE TABLE employee_partitioned (
 > name STRING,
@@ -745,6 +1006,28 @@ $hdfs dfs -ls /user/hive/warehouse/employee_id_buckets
       OFFLINE;
       > ALTER TABLE employee_partitioned PARTITION (year=2018) CONCATENATE;
 
+
+Dynamic partition 
+
+hive> set hive.exec.dynamic.partition = true;
+hive> set hive.exec.dynamic.partition.mode = nonstrict;
+
+
+hive> create table sales_part_state (id int, fname string, zip string, ip string, pid string) partitioned by (state string) row format delimited fields terminated by '\t';
+hive> Insert into sales_part_state partition(state) select id,fname,zip,ip,pid,state from sales;
+
+
+select * from partition_keys
+
+
+
+
+
+
+
+
+
+
 - Table 
     ALTER TABLE employee_internal SET SERDEPROPERTIES 
       ('field.delim' = '$');
@@ -765,3 +1048,128 @@ $hdfs dfs -ls /user/hive/warehouse/employee_id_buckets
 
 
 - Table clean 
+
+
+
+- Sampling
+
+
+SELECT * FROM Sales_orc TABLESAMPLE(BUCKET 1 OUT OF 10 ON id);
+SELECT * FROM Sales_orc TABLESAMPLE(BUCKET 3 OUT OF 5 ON id);
+SELECT * FROM Sales_orc TABLESAMPLE(BUCKET 3 OUT OF 100 ON id);
+SELECT * FROM Sales_orc TABLESAMPLE(BUCKET 3 OUT OF 1000 ON id);
+SELECT * FROM Sales_orc TABLESAMPLE(BUCKET 1 OUT OF 10 ON fname);
+
+SELECT count(*) FROM Sales_orc TABLESAMPLE(BUCKET 4 OUT OF 10 ON rand());
+SELECT count(*) FROM Sales_orc TABLESAMPLE(BUCKET 5 OUT OF 10 ON rand());
+SELECT count(*) FROM Sales_orc TABLESAMPLE(BUCKET 4 OUT OF 10 ON rand());
+SELECT count(*) FROM Sales_orc TABLESAMPLE(BUCKET 5 OUT OF 10 ON rand());
+
+
+SELECT * FROM Sales_orc TABLESAMPLE(10 PERCENT);
+SELECT * FROM Sales_orc TABLESAMPLE(10%);
+SELECT * FROM Sales_orc TABLESAMPLE(10M);
+SELECT * FROM Sales_orc TABLESAMPLE(0.1M);
+SELECT * FROM Sales_orc TABLESAMPLE(10 ROWS);
+SELECT * FROM Sales_orc TABLESAMPLE(100 ROWS);
+
+
+
+- Date time
+
+hive> SELECT date_add('2016-01-30',5);
+
+
+hive> SELECT datediff('2016-01-30', '2016-01-25');
+
+
+
+
+
+- Statistics
+ANALYZE TABLE [db_name.]tablename [PARTITION(partcol1[=val1], partcol2[=val2], ...)] COMPUTE STATISTICS [FOR COLUMNS][NOSCAN];
+
+
+ANALYZE TABLE sales COMPUTE STATISTICS;
+
+- statictics for partition table 
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+
+
+ANALYZE TABLE sales_part PARTITION(pid= 'PI_09') COMPUTE STATISTICS;
+
+
+
+DESCRIBE FORMATTED sales_part PARTITION(pid='PI_09');
+
+
+ANALYZE TABLE sales_part PARTITION(pid) COMPUTE STATISTICS;
+
+
+- Column statistics
+
+hive> ANALYZE TABLE t1 [PARTITION p1] COMPUTE STATISTICS FOR [COLUMNS c1, c2..]
+
+ANALYZE TABLE sales COMPUTE STATISTICS FOR COLUMNS ip, pid;
+
+
+ANALYZE TABLE sales_part PARTITION(pid='PI_09') COMPUTE STATISTICS FOR COLUMNS fname, ip;
+
+
+- Top K statistic
+
+hive> set hive.stats.topk.collect=true;
+hive> set hive.stats.topk.num=4;
+hive> set hive.stats.topk.minpercent=0;
+hive> set hive.stats.topk.poolsize=100;
+
+- Analytics function 
+
+
+hive> select fname,ip,RANK() OVER (ORDER BY ip) as ranknum, RANK() OVER (PARTITION BY ip order by fname ) from sales ;
+
+select fname,ip,DENSE_RANK() OVER (ORDER BY ip) as densenum, DENSE_RANK() OVER (PARTITION BY ip order by fname) from sales ;
+
+select fname,ip,ROW_NUMBER() OVER (ORDER BY ip), RANK() OVER (ORDER BY ip), DENSE_RANK() OVER (ORDER BY ip) from sales;
+
+SELECT fname, id, NTILE(4) OVER (ORDER BY id DESC) AS quartile FROM sales WHERE ip = '192.168.56.101';
+
+
+- Window
+
+SELECT fname, ip, COUNT(pid) OVER (PARTITION BY ip ORDER BY fname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM sales;
+
+SELECT fname,ip,zip, COUNT(pid) OVER (PARTITION BY ip), COUNT(ip) OVER (PARTITION BY zip) FROM sales;
+
+
+SELECT fname,pid, LEAD(pid) OVER (PARTITION BY ip ORDER BY ip)
+FROM sales;
+
+
+SELECT fname,pid, LAG(pid) OVER (PARTITION BY ip ORDER BY ip)
+FROM sales;
+
+
+select fname, ip, first_value(pid) over (partition by ip order by fname) as pid from sales;
+
+
+select fname, ip, last_value(pid) over (partition by ip order by fname) as pid from sales;
+
+
+
+- Format 
+create table sales ( id int, fname string, lname string, address string, city string, state string, zip string, ip string, pid string, dop string) row format delimited fields terminated by '\t STORED AS TEXTFILE';
+
+
+create table sales ( id int, fname string, lname string, address string, city string, state string, zip string, ip string, pid string, dop string) row format delimited fields terminated by '\t' STORED AS SEQUENCEFILE;
+
+
+TEXTFILE
+SEQUENCEFILE
+RCFILE
+ORC
+PARQUET
+AVRO
+
+
