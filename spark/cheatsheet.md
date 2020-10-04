@@ -90,3 +90,25 @@ hiveCtx = HiveContext(sc)rows = hiveCtx.sql("SELECT name, age FROM users")firstR
 > frompyspark.sqlimport HiveContexthiveCtx = HiveContext(sc)rows = hiveCtx.sql("SELECT key, value FROM mytable")keys = rows.map(lambda row: row[0])
 
 
+- window
+
+val ipDStream= accessLogsDStream.map(logEntry=> (logEntry.getIpAddress(), 1))val ipCountDStream= ipDStream.reduceByKeyAndWindow(  {(x, y) => x + y}, // Adding elements in the new batches entering the window  {(x, y) => x - y}, // Removing elements from the oldest batches exiting the windowSeconds(30),       // Window durationSeconds(10))       // Slide duration
+
+
+def updateRunningSum(values:Seq[Long], state:Option[Long]) = {Some(state.getOrElse(0L) + values.size)}val responseCodeDStream= accessLogsDStream.map(log => (log.getResponseCode(), 1L))val responseCodeCountDStream= responseCodeDStream.updateStateByKey(updateRunningSum_)
+
+- Flume
+
+> val events=FlumeUtils.createStream(ssc, receiverHostname, receiverPort)
+> val events=FlumeUtils.createPollingStream(ssc, receiverHostname, receiverPort)
+
+
+- Checkpoint
+> ssc.checkpoint("hdfs://...")
+
+
+- Fault tolerant
+
+> def createStreamingContext() = {  ...val sc =newSparkContext(conf)// Create a StreamingContext with a 1 second batch sizeval ssc =newStreamingContext(sc, Seconds(1))  ssc.checkpoint(checkpointDir)}...val ssc =StreamingContext.getOrCreate(checkpointDir, createStreamingContext_)
+
+
