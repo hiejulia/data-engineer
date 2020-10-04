@@ -16,3 +16,12 @@ jupyter
 numpy
 pytest
 findspark
+
+
+
+- [Data Analytics](http://spark.apache.org/sql/)
+- [Machine Learning](http://spark.apache.org/mllib/)
+- [Streaming](http://spark.apache.org/streaming/)
+- [Graph Analytics](http://spark.apache.org/graphx/)
+
+
